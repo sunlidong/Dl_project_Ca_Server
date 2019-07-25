@@ -1,0 +1,149 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+volumes:
+  ca-master.example.com:
+  ca-order-msp.example.com:
+  ca-org1-msp.example.com:
+  ca-org2-msp.example.com:
+  ca-order-tls.example.com:
+  ca-org1-tls.example.com:
+  ca-org2-tls.example.com:
+
+
+networks:
+  byfn:
+
+services:
+  ca-master.example.com:
+    container_name: ca-master.example.com
+    image: hyperledger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+      - FABRIC_CA_SERVER_CA_NAME=ca-master.example.com
+    ports:
+      - "1054:7054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw  --cfg.affiliations.allowremove  --cfg.identities.allowremove'
+    volumes:
+      - ./cafile/ca-master.example.com:/etc/hyperledger/fabric-ca-server
+    networks:
+      - byfn
+
+  ca-order-msp.example.com:
+    container_name: ca-order-msp.example.com
+    image: hyperledger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+      - FABRIC_CA_SERVER_CA_NAME= ca-order-msp.example.com
+    ports:
+      - "7056:7054"
+    command: sh -c 'fabric-ca-server init -b admin:adminpw  --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054;fabric-ca-server start -b admin:adminpw  --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054'
+    volumes:
+      - ./cafile/ca-order-msp.example.com:/etc/hyperledger/fabric-ca-server
+    depends_on:
+      - ca-master.example.com
+    extra_hosts:
+      - "ca-master.example.com:10.0.0.29"
+    networks:
+      - byfn
+
+  ca-org1-msp.example.com:
+    container_name: ca-org1-msp.example.com
+    image: hyperledger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+      - FABRIC_CA_SERVER_CA_NAME=ca-org1-msp.example.com
+    ports:
+      - "8056:7054"
+    command: sh -c 'fabric-ca-server init -b admin:adminpw  --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054 ;fabric-ca-server start -b admin:adminpw  --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054'
+    volumes:
+      - ./cafile/ca-org1-msp.example.com:/etc/hyperledger/fabric-ca-server
+    networks:
+      - byfn
+    depends_on:
+      - ca-master.example.com
+    extra_hosts:
+      - "ca-master.example.com:10.0.0.29"
+
+  ca-org2-msp.example.com:
+    container_name: ca-org2-msp.example.com
+    image: hyperledger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+      - FABRIC_CA_SERVER_CA_NAME=ca-org2-msp.example.com
+    ports:
+      - "9056:7054"
+    command: sh -c 'fabric-ca-server init -b admin:adminpw  --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054 ;fabric-ca-server start --cfg.affiliations.allowremove  --cfg.identities.allowremove -b admin:adminpw -u http://admin:adminpw@ca-master.example.com:1054'
+    volumes:
+      - ./cafile/ca-org2-msp.example.com:/etc/hyperledger/fabric-ca-server
+    extra_hosts:
+      - "ca-master.example.com:10.0.0.29"
+    depends_on:
+      - ca-master.example.com
+    networks:
+      - byfn
+
+  ca-order-tls.example.com:
+    container_name: ca-order-tls.example.com
+    image: hyperledger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+      - FABRIC_CA_SERVER_CA_NAME=ca-order-tls.example.com
+    ports:
+      - "7055:7054"
+    command: sh -c 'fabric-ca-server init -b admin:adminpw  --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054;fabric-ca-server start --cfg.affiliations.allowremove  --cfg.identities.allowremove -b admin:adminpw -u http://admin:adminpw@ca-master.example.com:1054'
+    volumes:
+      - ./cafile/ca-order-tls.example.com:/etc/hyperledger/fabric-ca-server
+    depends_on:
+      - ca-master.example.com
+    extra_hosts:
+      - "ca-master.example.com:10.0.0.29"
+    networks:
+      - byfn
+
+  ca-org1-tls.example.com:
+    container_name: ca-org1-tls.example.com
+    image: hyperledger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+      - FABRIC_CA_SERVER_CA_NAME=ca-org1-tls.example.com
+    ports:
+      - "8055:7054"
+    command: sh -c 'fabric-ca-server init -b admin:adminpw  --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054 ;fabric-ca-server start -b admin:adminpw --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054'
+    volumes:
+      - ./cafile/ca-org1-tls.example.com:/etc/hyperledger/fabric-ca-server
+    networks:
+      - byfn
+    depends_on:
+      - ca-master.example.com
+    extra_hosts:
+      - "ca-master.example.com:10.0.0.29"
+
+  ca-org2-tls.example.com:
+    container_name: ca-org2-tls.example.com
+    image: hyperledger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+      - FABRIC_CA_SERVER_CA_NAME=ca-org2-tls.example.com
+    ports:
+      - "9055:7054"
+    command: sh -c 'fabric-ca-server init -b admin:adminpw  --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054 ;fabric-ca-server start -b admin:adminpw --cfg.affiliations.allowremove  --cfg.identities.allowremove -u http://admin:adminpw@ca-master.example.com:1054'
+    volumes:
+      - ./cafile/ca-org2-tls.example.com:/etc/hyperledger/fabric-ca-server
+    extra_hosts:
+      - "ca-master.example.com:10.0.0.29"
+    depends_on:
+      - ca-master.example.com
+    networks:
+      - byfn
